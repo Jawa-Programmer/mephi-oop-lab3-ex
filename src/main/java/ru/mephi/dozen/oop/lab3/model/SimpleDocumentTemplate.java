@@ -1,6 +1,5 @@
 package ru.mephi.dozen.oop.lab3.model;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;

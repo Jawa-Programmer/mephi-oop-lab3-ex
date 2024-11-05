@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
  */
 public interface IDocumentTemplate {
 
-    Pattern VARIABLE_PATTERN = Pattern.compile("\\#\\{(\\w*)\\}");
+    Pattern VARIABLE_PATTERN = Pattern.compile("#\\{(\\w*)\\}");
 
     /**
      * Получить исходный шаблон

@@ -112,8 +112,7 @@ class BlockingDocumentServiceTest extends AbstractTest {
 
         var result = service.prepareCompositeTemplate("contract_edit");
 
-        assertTrue(result.isPresent());
-        assertEquals(excepted, result.map(IDocumentTemplate::getSource).get());
+        assertEquals(excepted, result.map(IDocumentTemplate::getSource).orElse(null));
     }
 
     private final Random random = new Random();
@@ -172,12 +171,14 @@ class BlockingDocumentServiceTest extends AbstractTest {
     @DisplayName("Проверка, что выполнение в многопоточной среде не приводит к возникновениям ошибок")
     void multithreadingTest() {
         try (ExecutorService pool = new ThreadPoolExecutor(4, 10,
-                15, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>())) {
+                15, TimeUnit.SECONDS, new LinkedBlockingQueue<>())) {
+            final var tasksCount = 100;
+
             var documents = generateRandomDocuments(200, 500, 2000);
             documents.forEach((k, v) -> service.saveTemplate(k, v));
             List<Future<String>> tasks = new ArrayList<>();
 
-            for (int i = 0; i < 100; ++i) {
+            for (int i = 0; i < tasksCount; ++i) {
                 var randKey = randomElement(documents.keySet());
                 var task = switch (random.nextInt(5)) {
                     case 0 -> pool.submit(timed("Save", () -> saveDocument(randKey, documents.get(randKey))));
@@ -195,6 +196,8 @@ class BlockingDocumentServiceTest extends AbstractTest {
             printAverageByPrefix("Elapsed time for Remove: ", results);
             printAverageByPrefix("Elapsed time for Get: ", results);
             printAverageByPrefix("Elapsed time for Prepare: ", results);
+
+            assertEquals(tasksCount, results.size());
         }
     }
 

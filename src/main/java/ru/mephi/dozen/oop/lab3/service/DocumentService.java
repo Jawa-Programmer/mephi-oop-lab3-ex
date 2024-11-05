@@ -1,6 +1,5 @@
 package ru.mephi.dozen.oop.lab3.service;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import ru.mephi.dozen.oop.lab3.model.IDocumentTemplate;
 
