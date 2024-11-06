@@ -7,16 +7,21 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import ru.mephi.dozen.oop.lab3.model.IDocumentTemplate;
 import ru.mephi.dozen.oop.lab3.model.SimpleDocumentTemplate;
+import ru.mephi.dozen.oop.lab3.service.DigitalSignatureService;
 import ru.mephi.dozen.oop.lab3.service.DocumentService;
+import ru.mephi.dozen.oop.lab3.util.Pair;
 
 /**
  * Простейшая реализация сервиса документов, выполняющая все операции синхронно с помощью одного владельца блокировки
  */
+@RequiredArgsConstructor
 public class BlockingDocumentService implements DocumentService {
 
     private final Map<String, IDocumentTemplate> documents = new HashMap<>();
+    private final DigitalSignatureService digitalSignatureService;
 
     private void checkCycles(String startName, Set<String> dependencies, Set<String> checked) {
         if (dependencies.contains(startName)) {
@@ -52,24 +57,24 @@ public class BlockingDocumentService implements DocumentService {
     }
 
 
-    private Pair<String, String> mapPlaceholders(Pair<String, IDocumentTemplate> entry) {
-        if (entry.right == null) {
-            return new Pair<>((entry.left), "#{" + entry.left + "}");
-        }
-        return new Pair<>(entry.left, entry.right.getSource());
-    }
-
-
     private IDocumentTemplate prepareCompositeTemplate0(String name) {
         var document = documents.get(name);
         if (document == null) {
             return null;
         }
+        // Если документ независимый, возвращаем его
+        if (document.getDefinedBindings().isEmpty()) {
+            return document;
+        }
         var data = document.getDefinedBindings().stream()
-                .map(it -> new Pair<>(it, prepareCompositeTemplate0(it)))
-                .map(this::mapPlaceholders)
-                .collect(Collectors.toUnmodifiableMap(Pair::left, Pair::right));
-        return new SimpleDocumentTemplate(document.fill(data));
+                .map(it -> new Pair<>(it, prepareCompositeTemplate0(it))) // рекурсивно собираем зависимости
+                .filter(it -> it.right() != null) // опускаем случаи несуществующих документов
+                .collect(Collectors.toUnmodifiableMap( // собираем мапу <Имя Документа, Его Подпись>
+                        Pair::left,
+                        p -> digitalSignatureService.sign(p.right().getSource())
+                ));
+        // заполняем пропуски цифровыми подписями зависимых документов, формируем из этого новый документ
+        return new SimpleDocumentTemplate(document.fillIfPresent(data));
     }
 
     @Override
@@ -86,7 +91,5 @@ public class BlockingDocumentService implements DocumentService {
         }
     }
 
-    private record Pair<L, R>(L left, R right) {
 
-    }
 }

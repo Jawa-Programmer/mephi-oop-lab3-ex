@@ -20,6 +20,14 @@ class SimpleDocumentTemplateTest {
     }
 
     @Test
+    void fillIfPresent() {
+        var document = new SimpleDocumentTemplate("author: #{author}\nemail: #{email}\neditor: #{author}\n{#editor}");
+        var expected = "author: A\nemail: #{email}\neditor: A\n{#editor}";
+        var actual = document.fillIfPresent(Map.of("author", "A", "editor", "E"));
+        assertEquals(expected, actual);
+    }
+
+    @Test
     void fill_ok() {
         var document = new SimpleDocumentTemplate("author: #{author}\nemail: #{email}\neditor: #{author}\n{#editor}");
         var expected = "author: A\nemail: B@C.D\neditor: A\n{#editor}";

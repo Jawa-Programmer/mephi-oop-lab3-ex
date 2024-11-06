@@ -30,7 +30,8 @@ public interface IDocumentTemplate {
     }
 
     /**
-     * Возвращает результат подстановки данных из data в шаблон на позиции #{name}
+     * Возвращает результат подстановки данных из data в шаблон на позиции #{name}. Если data не содержит необходимое значение,
+     * будет выброшено исключение NoSuchElementException
      *
      * @param data данные
      * @return результирующая строка
@@ -42,6 +43,27 @@ public interface IDocumentTemplate {
             var ret = data.get(it.group(1));
             if (ret == null) {
                 throw new NoSuchElementException("Key '" + it.group(1) + "' not found");
+            }
+            return ret.toString();
+        });
+    }
+
+    /**
+     * Возвращает результат подстановки данных из data в шаблон на позиции #{name}. Если в data отсутствует ключ, в
+     * исходном шаблоне местоуказатель остается без изменений.
+     *
+     * @param data данные
+     * @return результирующая строка
+     */
+    default String fillIfPresent(Map<String, ?> data) {
+        if (data.isEmpty()) {
+            return getSource();
+        }
+        var matcher = VARIABLE_PATTERN.matcher(getSource());
+        return matcher.replaceAll(it -> {
+            var ret = data.get(it.group(1));
+            if (ret == null) {
+                return it.group();
             }
             return ret.toString();
         });

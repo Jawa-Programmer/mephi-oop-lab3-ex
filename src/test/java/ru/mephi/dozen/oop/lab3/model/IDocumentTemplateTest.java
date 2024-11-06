@@ -37,6 +37,14 @@ class IDocumentTemplateTest {
     }
 
     @Test
+    void fillIfPresent() {
+        var document = new TestDocumentTemplate("author: #{author}\nemail: #{email}\neditor: #{author}\n{#editor}");
+        var expected = "author: A\nemail: #{email}\neditor: A\n{#editor}";
+        var actual = document.fillIfPresent(Map.of("author", "A", "editor", "E"));
+        assertEquals(expected, actual);
+    }
+
+    @Test
     void fill_recursive() {
         var document = new TestDocumentTemplate("author: #{author} #{date}");
         var expected1 = "author: #{first_name} #{middle_name} #{last_name} 2000-01-01";

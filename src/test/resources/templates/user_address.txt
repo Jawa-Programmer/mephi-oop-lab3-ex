@@ -1,1 +1,0 @@
-Страна: #{user_country}, Город: #{user_city}, Улица: #{user_street}, Дом: #{user_building}
